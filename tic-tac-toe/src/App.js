@@ -1,19 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 
-/**
- * Tic-Tac-Toe (Challenges 1–7)
- * - Challenge 1: regex winner check for 3x3 (no loop in the regex-based winner calc)
- * - Challenge 2: reset button
- * - Challenge 3: automate player O after X (when human is X)
- * - Challenge 4: switch player button (computer moves for current player, then human plays opposite)
- * - Challenge 5: minimax (recursive) for findBestMove()
- * - Challenge 6: variable board size n×m, win length k = min(n, m)
- * - Challenge 7: resize during play by mapping old board into new board
- */
-
-/* =========================
-   Presentational Components
-========================= */
 
 function Square({ value, onSquareClick }) {
   return (
@@ -27,14 +13,7 @@ function SizePicker({ rows, cols, setRows, setCols, onApply }) {
   const winLen = Math.min(rows, cols);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 10,
-        alignItems: "center",
-        flexWrap: "wrap",
-      }}
-    >
+    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
       <label>
         Rows:&nbsp;
         <input
@@ -59,12 +38,10 @@ function SizePicker({ rows, cols, setRows, setCols, onApply }) {
         />
       </label>
 
-      <button onClick={onApply} type="button">
-        Apply Size
-      </button>
+      <button onClick={onApply} type="button">Apply Size</button>
 
       <span style={{ opacity: 0.8 }}>
-        Win = <strong>{winLen}</strong> in a row
+        Win = <strong>{winLen}</strong>
       </span>
     </div>
   );
@@ -88,23 +65,16 @@ function Board({ squares, rows, cols, onClickSquare, status, winner }) {
 
       <div style={gridStyle}>
         {squares.map((value, i) => (
-          <Square
-            key={i}
-            value={value}
-            onSquareClick={() => onClickSquare(i)}
-          />
+          <Square key={i} value={value} onSquareClick={() => onClickSquare(i)} />
         ))}
       </div>
     </>
   );
 }
 
-/* =========================
-   Game (All Challenges)
-========================= */
 
 export default function Game() {
-  // Challenge 6 + 7: board size draft + live size (default 3x3)
+  // Challenge 6/7: dynamic board size
   const [rowsDraft, setRowsDraft] = useState(3);
   const [colsDraft, setColsDraft] = useState(3);
   const [rows, setRows] = useState(3);
@@ -113,23 +83,21 @@ export default function Game() {
   const size = rows * cols;
   const k = Math.min(rows, cols);
 
-  // Time travel
   const [history, setHistory] = useState([Array(size).fill(null)]);
   const [currentMove, setCurrentMove] = useState(0);
   const [xIsNext, setXIsNext] = useState(true);
 
-  // Challenge 4: which side the HUMAN plays
+  // Challenge 4: player switching
   const [humanPlayer, setHumanPlayer] = useState("X");
 
   const currentSquares = history[currentMove];
   const currentPlayer = xIsNext ? "X" : "O";
   const isLatestMove = currentMove === history.length - 1;
 
-  // Challenge 1 + 6: winner (regex only for 3x3; otherwise generalized scan)
   const winner = calculateWinner(currentSquares, rows, cols, k);
 
   const isBoardFull = useMemo(
-    () => currentSquares.every((s) => s !== null),
+    () => currentSquares.every((square) => square !== null),
     [currentSquares]
   );
 
@@ -139,8 +107,7 @@ export default function Game() {
     return `Next player: ${currentPlayer}`;
   }, [winner, isBoardFull, currentPlayer]);
 
-  /* ===== Challenge 2: Reset ===== */
-
+  // Challenge 2: reset board
   function resetGame(nextRows = rows, nextCols = cols) {
     const nextSize = nextRows * nextCols;
     setHistory([Array(nextSize).fill(null)]);
@@ -149,8 +116,7 @@ export default function Game() {
     setHumanPlayer("X");
   }
 
-  /* ===== Challenge 7: Resize during play with mapping ===== */
-
+  // Challenge 7: resize during play
   function applySize() {
     const newRows = rowsDraft;
     const newCols = colsDraft;
@@ -163,19 +129,15 @@ export default function Game() {
       newCols
     );
 
-    // Keep it sane: reset history to the mapped current position.
     setRows(newRows);
     setCols(newCols);
     setHistory([mappedSquares]);
     setCurrentMove(0);
 
-    // Infer next turn based on counts
     const xCount = mappedSquares.filter((s) => s === "X").length;
     const oCount = mappedSquares.filter((s) => s === "O").length;
     setXIsNext(xCount === oCount);
   }
-
-  /* ===== Time travel + play ===== */
 
   function handlePlay(nextSquares) {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
@@ -189,13 +151,8 @@ export default function Game() {
     setXIsNext(nextMove % 2 === 0);
   }
 
-  /* ===== Human click ===== */
-
   function onClickSquare(i) {
-    if (winner) return;
-    if (currentSquares[i]) return;
-
-    // Only allow clicks when it's the human's turn
+    if (!isLatestMove || winner || currentSquares[i]) return;
     if (currentPlayer !== humanPlayer) return;
 
     const nextSquares = currentSquares.slice();
@@ -203,55 +160,63 @@ export default function Game() {
     handlePlay(nextSquares);
   }
 
-  /* ===== Challenge 3: Auto O after X (when human is X) ===== */
-
+  // Challenge 3/4/5: computer move
   useEffect(() => {
-    if (!isLatestMove) return;
-    if (winner) return;
-    if (isBoardFull) return;
+    if (!isLatestMove || winner || isBoardFull) return;
 
-    // If the human is X, the computer plays O on O's turns
-    if (humanPlayer === "X" && currentPlayer === "O") {
-      const best = findBestMoveMinimax(currentSquares, rows, cols, k, "O");
+    if (currentPlayer !== humanPlayer) {
+      const best = findBestMove(
+        currentSquares.slice(),
+        rows,
+        cols,
+        k,
+        currentPlayer
+      );
+
       if (best === null) return;
 
       const nextSquares = currentSquares.slice();
-      nextSquares[best] = "O";
+      nextSquares[best] = currentPlayer;
       handlePlay(nextSquares);
     }
   }, [
+    currentSquares,
+    currentPlayer,
+    humanPlayer,
+    isBoardFull,
     isLatestMove,
     winner,
-    isBoardFull,
-    humanPlayer,
-    currentPlayer,
-    currentSquares,
     rows,
     cols,
     k,
   ]);
 
-  /* ===== Challenge 4: Switch Player button ===== */
-
   function switchPlayerAndComputerMove() {
-    if (winner) return;
-    if (isBoardFull) return;
+    if (!isLatestMove || winner || isBoardFull) return;
 
-    const best = findBestMoveMinimax(currentSquares, rows, cols, k, currentPlayer);
+    const best = findBestMove(
+      currentSquares.slice(),
+      rows,
+      cols,
+      k,
+      currentPlayer
+    );
+
     if (best === null) return;
 
     const nextSquares = currentSquares.slice();
     nextSquares[best] = currentPlayer;
     handlePlay(nextSquares);
 
-    // After computer plays current player, human becomes the opposite
     setHumanPlayer(opponentOf(currentPlayer));
   }
 
   const moves = useMemo(
     () =>
       history.map((_, move) => {
-        const description = move > 0 ? `Go to move #${move}` : "Go to game start";
+        const description =
+          move > 0 ? `Go to move #${move}` : "Go to game start";
+
         return (
           <li key={move}>
             <button onClick={() => jumpTo(move)} type="button">
@@ -274,17 +239,8 @@ export default function Game() {
           onApply={applySize}
         />
 
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            marginTop: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <button onClick={() => resetGame()} type="button">
-            Reset
-          </button>
+        <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+          <button onClick={() => resetGame()} type="button">Reset</button>
 
           <button onClick={switchPlayerAndComputerMove} type="button">
             Switch to Player {opponentOf(humanPlayer)}
@@ -292,6 +248,10 @@ export default function Game() {
 
           <span style={{ marginLeft: 6, opacity: 0.85 }}>
             Human: <strong>{humanPlayer}</strong>
+          </span>
+
+          <span style={{ opacity: 0.85 }}>
+            Board: <strong>{rows}×{cols}</strong>
           </span>
         </div>
 
@@ -312,46 +272,28 @@ export default function Game() {
   );
 }
 
-/* =========================
-   Challenge 1 + 6: Winner
-========================= */
 
-/**
- * calculateWinner
- * - For 3x3: Challenge 1 regex approach (no loop inside the regex check)
- * - For n×m: Challenge 6 generalized scan for k = min(n, m) in a row
- */
 function calculateWinner(squares, rows, cols, k) {
   if (rows === 3 && cols === 3 && k === 3) {
     return calculateWinnerRegex3x3(squares);
   }
 
-  // Directions: right, down, diag down-right, diag down-left
-  const directions = [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [1, -1],
-  ];
+  const directions = [[0,1],[1,0],[1,1],[1,-1]];
 
-  for (let r = 0; r < rows; r += 1) {
-    for (let c = 0; c < cols; c += 1) {
-      const start = squares[idx(r, c, cols)];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const start = squares[idx(r,c,cols)];
       if (!start) continue;
 
-      for (const [dr, dc] of directions) {
+      for (const [dr,dc] of directions) {
         let ok = true;
 
-        for (let step = 1; step < k; step += 1) {
-          const rr = r + dr * step;
-          const cc = c + dc * step;
+        for (let step = 1; step < k; step++) {
+          const rr = r + dr*step;
+          const cc = c + dc*step;
 
-          if (rr < 0 || rr >= rows || cc < 0 || cc >= cols) {
-            ok = false;
-            break;
-          }
-
-          if (squares[idx(rr, cc, cols)] !== start) {
+          if (rr<0 || rr>=rows || cc<0 || cc>=cols ||
+              squares[idx(rr,cc,cols)] !== start) {
             ok = false;
             break;
           }
@@ -365,17 +307,11 @@ function calculateWinner(squares, rows, cols, k) {
   return null;
 }
 
-/**
- * Challenge 1 regex for 3x3 only.
- * Uses '-' for empty squares.
- */
 function calculateWinnerRegex3x3(squares) {
   const re =
     /^(?:(?:...){0,2}([OX])\1\1|.{0,2}([OX])..\2..\2|([OX])...\3...\3|..([OX]).\4.\4)/g;
 
   const flat = squares.map((s) => s ?? "-").join("");
-
-  // /g regex is stateful — reset before exec
   re.lastIndex = 0;
 
   const match = re.exec(flat);
@@ -384,43 +320,57 @@ function calculateWinnerRegex3x3(squares) {
   return match[1] || match[2] || match[3] || match[4] || null;
 }
 
-/* =========================
-   Challenge 5: Minimax AI
-========================= */
 
-/**
- * findBestMoveMinimax
- * - returns the best move index for `player`
- * - implements minimax(board, depth, isMaximizing)
- *
- * Note: For boards bigger than 3x3, the game tree explodes.
- * We use a depth cap to keep the app responsive.
- */
-function findBestMoveMinimax(squares, rows, cols, k, player) {
-  const empties = getEmptyIndices(squares);
-  if (empties.length === 0) return null;
 
-  const maxDepth = squares.length <= 9 ? 99 : 5;
+
+function findBestMove(board, rows, cols, k, currentPlayer) {
+  const emptyCells = getEmptyIndices(board);
+  if (emptyCells.length === 0) return null;
+
+  const opponent = opponentOf(currentPlayer);
+
+  // win
+  for (const i of emptyCells) {
+    board[i] = currentPlayer;
+    if (calculateWinner(board, rows, cols, k) === currentPlayer) {
+      board[i] = null;
+      return i;
+    }
+    board[i] = null;
+  }
+
+  // block
+  for (const i of emptyCells) {
+    board[i] = opponent;
+    if (calculateWinner(board, rows, cols, k) === opponent) {
+      board[i] = null;
+      return i;
+    }
+    board[i] = null;
+  }
+
+  // minimax
+  const maxDepth = board.length <= 9 ? board.length : 4;
 
   let bestMove = null;
-  let bestScore = player === "X" ? -Infinity : Infinity;
+  let bestScore = currentPlayer === "X" ? -Infinity : Infinity;
 
-  for (const i of empties) {
-    squares[i] = player;
+  for (const i of emptyCells) {
+    board[i] = currentPlayer;
 
     const score = minimax(
-      squares,
+      board,
       rows,
       cols,
       k,
       0,
-      player === "X",
+      currentPlayer === "O",
       maxDepth
     );
 
-    squares[i] = null;
+    board[i] = null;
 
-    if (player === "X") {
+    if (currentPlayer === "X") {
       if (score > bestScore) {
         bestScore = score;
         bestMove = i;
@@ -433,24 +383,15 @@ function findBestMoveMinimax(squares, rows, cols, k, player) {
     }
   }
 
-  return bestMove ?? empties[0];
+  return bestMove ?? emptyCells[0];
 }
 
-/**
- * minimax(board, depth, isMaximizing)
- * Terminal:
- *  - X win => positive score
- *  - O win => negative score
- *  - draw => 0
- */
 function minimax(board, rows, cols, k, depth, isMaximizing, maxDepth) {
   const winner = calculateWinner(board, rows, cols, k);
 
-  // Terminal checks
   if (winner === "X") return 10 - depth;
   if (winner === "O") return depth - 10;
   if (isDraw(board)) return 0;
-
   if (depth >= maxDepth) return 0;
 
   let bestScore = isMaximizing ? -Infinity : Infinity;
@@ -468,73 +409,51 @@ function minimax(board, rows, cols, k, depth, isMaximizing, maxDepth) {
       maxDepth
     );
 
-    board[i] = null;
+    bestScore = isMaximizing
+      ? Math.max(bestScore, score)
+      : Math.min(bestScore, score);
 
-    if (isMaximizing) {
-      bestScore = Math.max(bestScore, score);
-    } else {
-      bestScore = Math.min(bestScore, score);
-    }
+    board[i] = null;
   }
 
   return bestScore;
 }
 
-/* =========================
-   Challenge 7: Resize Mapping
-========================= */
+//helpers
 
-/**
- * mapBoard
- * Sensible mapping: copy the overlapping top-left rectangle
- * old (r,c) -> new (r,c) for r < minRows and c < minCols
- */
 function mapBoard(oldSquares, oldRows, oldCols, newRows, newCols) {
   const newSquares = Array(newRows * newCols).fill(null);
 
   const rMax = Math.min(oldRows, newRows);
   const cMax = Math.min(oldCols, newCols);
 
-  for (let r = 0; r < rMax; r += 1) {
-    for (let c = 0; c < cMax; c += 1) {
-      const oldIndex = r * oldCols + c;
-      const newIndex = r * newCols + c;
-      newSquares[newIndex] = oldSquares[oldIndex];
+  for (let r = 0; r < rMax; r++) {
+    for (let c = 0; c < cMax; c++) {
+      newSquares[r*newCols+c] = oldSquares[r*oldCols+c];
     }
   }
 
   return newSquares;
 }
 
-/* =========================
-   Helpers
-========================= */
+function idx(r,c,cols){ return r*cols+c; }
 
-function idx(r, c, cols) {
-  return r * cols + c;
-}
+function opponentOf(player){ return player==="X" ? "O" : "X"; }
 
-function opponentOf(player) {
-  return player === "X" ? "O" : "X";
-}
-
-function getEmptyIndices(board) {
-  const out = [];
-  for (let i = 0; i < board.length; i += 1) {
-    if (board[i] === null) out.push(i);
+function getEmptyIndices(board){
+  const out=[];
+  for(let i=0;i<board.length;i++){
+    if(board[i]===null) out.push(i);
   }
   return out;
 }
 
-function isDraw(board) {
-  for (let i = 0; i < board.length; i += 1) {
-    if (board[i] === null) return false;
-  }
-  return true;
+function isDraw(board){
+  return board.every((s)=>s!==null);
 }
 
-function clampInt(value, min, max) {
+function clampInt(value,min,max){
   const n = Number(value);
-  if (!Number.isFinite(n)) return min;
-  return Math.max(min, Math.min(max, Math.floor(n)));
+  if(!Number.isFinite(n)) return min;
+  return Math.max(min,Math.min(max,Math.floor(n)));
 }
