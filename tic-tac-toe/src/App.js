@@ -170,7 +170,7 @@ function findBestMove(squares) {
 
   return null;
 }
-//challenge
+//challenge 1
 function declearWinner(squares) {
   const re =
     /^(?:(?:...){0,2}([OX])\1\1|.{0,2}([OX])..\2..\2|([OX])...\3...\3|..([OX]).\4.\4)/g;
