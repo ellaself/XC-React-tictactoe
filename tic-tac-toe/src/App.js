@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function Square({value, onSquareClick}) {
   return (
@@ -33,10 +33,9 @@ function Board({ xIsNext, squares, onPlay }) {
 
   return (
     <>
-    {/* added lil comment */}
       <div className="status">{status}</div>
       {winner && (
-    <p className="congrats"> Congratulations!! You Win!</p>
+        <p className="congrats"> Congratulations!! You Win!</p>
       )}
 
       <div className="board-row">
@@ -63,6 +62,21 @@ export default function Game() {
   const [history, setHistory] = useState([Array(9).fill(null)]);
   const [currentMove, setCurrentMove] = useState(0);
   const currentSquares = history[currentMove];
+
+  useEffect(() => {
+    const winner = declearWinner(currentSquares);
+    const boardFull = currentSquares.every(square => square !== null);
+
+    if (!xIsNext && !winner && !boardFull) {
+      const bestMove = findBestMove(currentSquares);
+
+      if (bestMove !== null) {
+        const nextSquares = currentSquares.slice();
+        nextSquares[bestMove] = 'O';
+        handlePlay(nextSquares);
+      }
+    }
+  }, [xIsNext, currentSquares]);
 
   function handlePlay(nextSquares) {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
@@ -109,12 +123,55 @@ export default function Game() {
   );
 }
 
-//challenge 1
+function getEmptySquares(squares) {
+  const emptySquares = [];
+  for (let i = 0; i < squares.length; i++) {
+    if (squares[i] === null) {
+      emptySquares.push(i);
+    }
+  }
+  return emptySquares;
+}
+
+function findBestMove(squares) {
+  const moveOrder = [4, 0, 2, 6, 8, 1, 3, 5, 7];
+  const emptySquares = getEmptySquares(squares);
+
+  // If O can win, play there
+  for (let i = 0; i < emptySquares.length; i++) {
+    const index = emptySquares[i];
+    const testSquares = squares.slice();
+    testSquares[index] = 'O';
+    if (declearWinner(testSquares) === 'O') {
+      return index;
+    }
+  }
+
+  // If X can win next, block X
+  for (let i = 0; i < emptySquares.length; i++) {
+    const index = emptySquares[i];
+    const testSquares = squares.slice();
+    testSquares[index] = 'X';
+    if (declearWinner(testSquares) === 'X') {
+      return index;
+    }
+  }
+
+  // Otherwise use center, corners, edges
+  for (let i = 0; i < moveOrder.length; i++) {
+    const index = moveOrder[i];
+    if (squares[index] === null) {
+      return index;
+    }
+  }
+
+  return null;
+}
+
 function declearWinner(squares) {
   const re =
     /^(?:(?:...){0,2}([OX])\1\1|.{0,2}([OX])..\2..\2|([OX])...\3...\3|..([OX]).\4.\4)/g;
 
-  // convert null → '-' so regex works
   const flat = squares.map((square) => square ?? '-').join('');
 
   re.lastIndex = 0;
