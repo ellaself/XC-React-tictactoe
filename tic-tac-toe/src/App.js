@@ -110,6 +110,7 @@ export default function Game() {
     );
   });
 
+  //challenge 2 
   return (
     <div className="game">
       <div className="game-board">
@@ -133,6 +134,8 @@ function getEmptySquares(squares) {
   return emptySquares;
 }
 
+
+//challenge 3 
 function findBestMove(squares) {
   const moveOrder = [4, 0, 2, 6, 8, 1, 3, 5, 7];
   const emptySquares = getEmptySquares(squares);
@@ -167,7 +170,7 @@ function findBestMove(squares) {
 
   return null;
 }
-
+//challenge
 function declearWinner(squares) {
   const re =
     /^(?:(?:...){0,2}([OX])\1\1|.{0,2}([OX])..\2..\2|([OX])...\3...\3|..([OX]).\4.\4)/g;
