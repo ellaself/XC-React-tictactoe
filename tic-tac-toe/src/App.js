@@ -23,10 +23,13 @@ function Board({ xIsNext, squares, onPlay, humanPlayer }) {
   }
 
   const winner = declearWinner(squares);
+  const boardFull = squares.every((s) => s !== null);
   let status;
 
   if (winner) {
     status = 'Winner: ' + winner;
+  } else if (boardFull) {
+    status = 'Tie game';
   } else {
     status = 'Next player: ' + (xIsNext ? 'X' : 'O');
   }
@@ -88,7 +91,7 @@ export default function Game() {
   // challenge 4: switch player
   function switchPlayer() {
     const winner = declearWinner(currentSquares);
-    const boardFull = currentSquares.every(s => s !== null);
+    const boardFull = currentSquares.every((s) => s !== null);
     const currentPlayer = xIsNext ? 'X' : 'O';
 
     if (winner || boardFull) return;
@@ -107,7 +110,7 @@ export default function Game() {
   // challenge 3: auto move
   useEffect(() => {
     const winner = declearWinner(currentSquares);
-    const boardFull = currentSquares.every(s => s !== null);
+    const boardFull = currentSquares.every((s) => s !== null);
     const currentPlayer = xIsNext ? 'X' : 'O';
 
     if (!winner && !boardFull && currentPlayer !== humanPlayer) {
@@ -122,9 +125,8 @@ export default function Game() {
   }, [xIsNext, currentSquares, humanPlayer]);
 
   const moves = history.map((squares, move) => {
-    const description = move > 0
-      ? 'Go to move #' + move
-      : 'Go to game start';
+    const description =
+      move > 0 ? 'Go to move #' + move : 'Go to game start';
 
     return (
       <li key={move}>
@@ -156,7 +158,6 @@ export default function Game() {
   );
 }
 
-// challenge 3: empty squares
 function getEmptySquares(squares) {
   const empty = [];
   for (let i = 0; i < squares.length; i++) {
@@ -165,40 +166,92 @@ function getEmptySquares(squares) {
   return empty;
 }
 
-// challenge 3: best move logic
-function findBestMove(squares, player) {
-  const moveOrder = [4, 0, 2, 6, 8, 1, 3, 5, 7];
-  const empty = getEmptySquares(squares);
-  const opponent = player === 'X' ? 'O' : 'X';
-
-  // win
-  for (let i of empty) {
-    const test = squares.slice();
-    test[i] = player;
-    if (declearWinner(test) === player) return i;
-  }
-
-  // block
-  for (let i of empty) {
-    const test = squares.slice();
-    test[i] = opponent;
-    if (declearWinner(test) === opponent) return i;
-  }
-
-  // order
-  for (let i of moveOrder) {
-    if (squares[i] === null) return i;
-  }
-
-  return null;
+function isDraw(squares) {
+  return squares.every((s) => s !== null);
 }
 
-// challenge 1: regex winner
+// challenge 5: minimax
+function minimax(board, depth, isMaximizing) {
+  const winner = declearWinner(board);
+
+  if (winner === 'X') return 10 - depth;
+  if (winner === 'O') return depth - 10;
+  if (isDraw(board)) return 0;
+
+  if (isMaximizing) {
+    let bestScore = -Infinity;
+
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] === null) {
+        board[i] = 'X';
+        const score = minimax(board, depth + 1, false);
+        board[i] = null;
+        bestScore = Math.max(bestScore, score);
+      }
+    }
+
+    return bestScore;
+  } else {
+    let bestScore = Infinity;
+
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] === null) {
+        board[i] = 'O';
+        const score = minimax(board, depth + 1, true);
+        board[i] = null;
+        bestScore = Math.min(bestScore, score);
+      }
+    }
+
+    return bestScore;
+  }
+}
+
+// challenge 5: best move with minimax
+function findBestMove(squares, player) {
+  let bestMove = null;
+
+  if (player === 'X') {
+    let bestScore = -Infinity;
+
+    for (let i = 0; i < squares.length; i++) {
+      if (squares[i] === null) {
+        squares[i] = 'X';
+        const score = minimax(squares, 0, false);
+        squares[i] = null;
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = i;
+        }
+      }
+    }
+  } else {
+    let bestScore = Infinity;
+
+    for (let i = 0; i < squares.length; i++) {
+      if (squares[i] === null) {
+        squares[i] = 'O';
+        const score = minimax(squares, 0, true);
+        squares[i] = null;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestMove = i;
+        }
+      }
+    }
+  }
+
+  return bestMove;
+}
+
+// challenge 1
 function declearWinner(squares) {
   const re =
     /^(?:(?:...){0,2}([OX])\1\1|.{0,2}([OX])..\2..\2|([OX])...\3...\3|..([OX]).\4.\4)/g;
 
-  const flat = squares.map(s => s ?? '-').join('');
+  const flat = squares.map((s) => s ?? '-').join('');
 
   re.lastIndex = 0;
   const match = re.exec(flat);
