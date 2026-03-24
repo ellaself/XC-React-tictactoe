@@ -8,11 +8,11 @@ function Square({ value, onSquareClick }) {
   );
 }
 
-function Board({ xIsNext, squares, onPlay, humanPlayer }) {
+function Board({ xIsNext, squares, onPlay, humanPlayer, rows, cols }) {
   function handleClick(i) {
     const currentPlayer = xIsNext ? 'X' : 'O';
 
-    if (declearWinner(squares) || squares[i]) return;
+    if (declearWinner(squares, rows, cols) || squares[i]) return;
 
     // challenge 4: only human can click
     if (currentPlayer !== humanPlayer) return;
@@ -22,7 +22,7 @@ function Board({ xIsNext, squares, onPlay, humanPlayer }) {
     onPlay(nextSquares);
   }
 
-  const winner = declearWinner(squares);
+  const winner = declearWinner(squares, rows, cols);
   const boardFull = squares.every((s) => s !== null);
   let status;
 
@@ -39,28 +39,35 @@ function Board({ xIsNext, squares, onPlay, humanPlayer }) {
       <div className="status">{status}</div>
       {winner && <p className="congrats"> Congratulations!! You Win!</p>}
 
-      <div className="board-row">
-        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
-        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
-        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
-      </div>
-      <div className="board-row">
-        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
-        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
-        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
-      </div>
-      <div className="board-row">
-        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
-        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
-        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
-      </div>
+      {/* challenge 6: dynamic board rendering */}
+      {Array.from({ length: rows }, (_, r) => (
+        <div className="board-row" key={r}>
+          {Array.from({ length: cols }, (_, c) => {
+            const index = r * cols + c;
+            return (
+              <Square
+                key={index}
+                value={squares[index]}
+                onSquareClick={() => handleClick(index)}
+              />
+            );
+          })}
+        </div>
+      ))}
     </>
   );
 }
 
 export default function Game() {
   const [xIsNext, setXIsNext] = useState(true);
-  const [history, setHistory] = useState([Array(9).fill(null)]);
+
+  // challenge 6: board size input
+  const [rows, setRows] = useState(3);
+  const [cols, setCols] = useState(3);
+  const [inputRows, setInputRows] = useState(3);
+  const [inputCols, setInputCols] = useState(3);
+
+  const [history, setHistory] = useState([Array(3 * 3).fill(null)]);
   const [currentMove, setCurrentMove] = useState(0);
 
   // challenge 4: track human player
@@ -76,8 +83,21 @@ export default function Game() {
   }
 
   // challenge 2: reset
-  function resetGame() {
-    setHistory([Array(9).fill(null)]);
+  function resetGame(newRows = rows, newCols = cols) {
+    setHistory([Array(newRows * newCols).fill(null)]);
+    setCurrentMove(0);
+    setXIsNext(true);
+    setHumanPlayer('X');
+  }
+
+  // challenge 6: apply board size
+  function applyBoardSize() {
+    const newRows = Math.max(1, Number(inputRows) || 3);
+    const newCols = Math.max(1, Number(inputCols) || 3);
+
+    setRows(newRows);
+    setCols(newCols);
+    setHistory([Array(newRows * newCols).fill(null)]);
     setCurrentMove(0);
     setXIsNext(true);
     setHumanPlayer('X');
@@ -90,31 +110,17 @@ export default function Game() {
 
   // challenge 4: switch player
   function switchPlayer() {
-    const winner = declearWinner(currentSquares);
-    const boardFull = currentSquares.every((s) => s !== null);
-    const currentPlayer = xIsNext ? 'X' : 'O';
-
-    if (winner || boardFull) return;
-
-    const bestMove = findBestMove(currentSquares, currentPlayer);
-
-    if (bestMove !== null) {
-      const nextSquares = currentSquares.slice();
-      nextSquares[bestMove] = currentPlayer;
-      handlePlay(nextSquares);
-    }
-
-    setHumanPlayer(currentPlayer === 'X' ? 'O' : 'X');
+    setHumanPlayer(humanPlayer === 'X' ? 'O' : 'X');
   }
 
   // challenge 3: auto move
   useEffect(() => {
-    const winner = declearWinner(currentSquares);
+    const winner = declearWinner(currentSquares, rows, cols);
     const boardFull = currentSquares.every((s) => s !== null);
     const currentPlayer = xIsNext ? 'X' : 'O';
 
     if (!winner && !boardFull && currentPlayer !== humanPlayer) {
-      const bestMove = findBestMove(currentSquares, currentPlayer);
+      const bestMove = findBestMove(currentSquares, currentPlayer, rows, cols);
 
       if (bestMove !== null) {
         const nextSquares = currentSquares.slice();
@@ -122,7 +128,7 @@ export default function Game() {
         handlePlay(nextSquares);
       }
     }
-  }, [xIsNext, currentSquares, humanPlayer]);
+  }, [xIsNext, currentSquares, humanPlayer, rows, cols]);
 
   const moves = history.map((squares, move) => {
     const description =
@@ -138,7 +144,34 @@ export default function Game() {
   return (
     <div className="game">
       <div className="game-board">
-        <button onClick={resetGame}>Reset</button>
+        {/* challenge 6: board size controls */}
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            rows:
+            <input
+              type="number"
+              min="1"
+              value={inputRows}
+              onChange={(e) => setInputRows(e.target.value)}
+            />
+          </label>
+
+          <label style={{ marginLeft: '10px' }}>
+            cols:
+            <input
+              type="number"
+              min="1"
+              value={inputCols}
+              onChange={(e) => setInputCols(e.target.value)}
+            />
+          </label>
+
+          <button onClick={applyBoardSize} style={{ marginLeft: '10px' }}>
+            set board size
+          </button>
+        </div>
+
+        <button onClick={() => resetGame()}>Reset</button>
         <button onClick={switchPlayer}>
           Switch to Player {humanPlayer === 'X' ? 'O' : 'X'}
         </button>
@@ -148,10 +181,15 @@ export default function Game() {
           squares={currentSquares}
           onPlay={handlePlay}
           humanPlayer={humanPlayer}
+          rows={rows}
+          cols={cols}
         />
       </div>
 
       <div className="game-info">
+        {/* challenge 6: show current board settings */}
+        <p>board: {rows} x {cols}</p>
+        <p>win length: {Math.min(rows, cols)}</p>
         <ol>{moves}</ol>
       </div>
     </div>
@@ -172,7 +210,7 @@ function isDraw(squares) {
 
 // challenge 5: minimax
 function minimax(board, depth, isMaximizing) {
-  const winner = declearWinner(board);
+  const winner = declearWinner(board, 3, 3);
 
   if (winner === 'X') return 10 - depth;
   if (winner === 'O') return depth - 10;
@@ -207,56 +245,153 @@ function minimax(board, depth, isMaximizing) {
   }
 }
 
-// challenge 5: best move with minimax
-function findBestMove(squares, player) {
-  let bestMove = null;
+function canWinNextMove(squares, player, rows, cols) {
+  for (let i = 0; i < squares.length; i++) {
+    if (squares[i] === null) {
+      const testSquares = squares.slice();
+      testSquares[i] = player;
 
-  if (player === 'X') {
-    let bestScore = -Infinity;
-
-    for (let i = 0; i < squares.length; i++) {
-      if (squares[i] === null) {
-        squares[i] = 'X';
-        const score = minimax(squares, 0, false);
-        squares[i] = null;
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = i;
-        }
+      if (declearWinner(testSquares, rows, cols) === player) {
+        return i;
       }
     }
+  }
+  return null;
+}
+
+function getCenterMove(squares, rows, cols) {
+  const centerRow = Math.floor(rows / 2);
+  const centerCol = Math.floor(cols / 2);
+
+  const centers = [];
+
+  if (rows % 2 === 1 && cols % 2 === 1) {
+    centers.push(centerRow * cols + centerCol);
   } else {
-    let bestScore = Infinity;
+    const rowChoices = rows % 2 === 0 ? [centerRow - 1, centerRow] : [centerRow];
+    const colChoices = cols % 2 === 0 ? [centerCol - 1, centerCol] : [centerCol];
 
-    for (let i = 0; i < squares.length; i++) {
-      if (squares[i] === null) {
-        squares[i] = 'O';
-        const score = minimax(squares, 0, true);
-        squares[i] = null;
-
-        if (score < bestScore) {
-          bestScore = score;
-          bestMove = i;
-        }
+    for (const r of rowChoices) {
+      for (const c of colChoices) {
+        centers.push(r * cols + c);
       }
     }
   }
 
-  return bestMove;
+  for (const index of centers) {
+    if (squares[index] === null) return index;
+  }
+
+  return null;
+}
+
+function getCornerMove(squares, rows, cols) {
+  const corners = [
+    0,
+    cols - 1,
+    (rows - 1) * cols,
+    (rows - 1) * cols + (cols - 1),
+  ];
+
+  for (const index of corners) {
+    if (squares[index] === null) return index;
+  }
+
+  return null;
+}
+
+// challenge 5: best move with minimax
+function findBestMove(squares, player, rows, cols) {
+  if (rows === 3 && cols === 3) {
+    let bestMove = null;
+
+    if (player === 'X') {
+      let bestScore = -Infinity;
+
+      for (let i = 0; i < squares.length; i++) {
+        if (squares[i] === null) {
+          squares[i] = 'X';
+          const score = minimax(squares, 0, false);
+          squares[i] = null;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMove = i;
+          }
+        }
+      }
+    } else {
+      let bestScore = Infinity;
+
+      for (let i = 0; i < squares.length; i++) {
+        if (squares[i] === null) {
+          squares[i] = 'O';
+          const score = minimax(squares, 0, true);
+          squares[i] = null;
+
+          if (score < bestScore) {
+            bestScore = score;
+            bestMove = i;
+          }
+        }
+      }
+    }
+
+    return bestMove;
+  }
+
+  // challenge 6: fast ai for larger boards
+  const opponent = player === 'X' ? 'O' : 'X';
+
+  const winningMove = canWinNextMove(squares, player, rows, cols);
+  if (winningMove !== null) return winningMove;
+
+  const blockingMove = canWinNextMove(squares, opponent, rows, cols);
+  if (blockingMove !== null) return blockingMove;
+
+  const centerMove = getCenterMove(squares, rows, cols);
+  if (centerMove !== null) return centerMove;
+
+  const cornerMove = getCornerMove(squares, rows, cols);
+  if (cornerMove !== null) return cornerMove;
+
+  const emptySquares = getEmptySquares(squares);
+  return emptySquares.length > 0 ? emptySquares[0] : null;
 }
 
 // challenge 1
-function declearWinner(squares) {
-  const re =
-    /^(?:(?:...){0,2}([OX])\1\1|.{0,2}([OX])..\2..\2|([OX])...\3...\3|..([OX]).\4.\4)/g;
+function declearWinner(squares, rows = 3, cols = 3) {
+  // challenge 6: generalized winner check
+  const winLength = Math.min(rows, cols);
+  const directions = [
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, -1],
+  ];
 
-  const flat = squares.map((s) => s ?? '-').join('');
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const start = squares[r * cols + c];
+      if (!start) continue;
 
-  re.lastIndex = 0;
-  const match = re.exec(flat);
+      for (const [dr, dc] of directions) {
+        let count = 1;
 
-  if (!match) return null;
+        for (let step = 1; step < winLength; step++) {
+          const nr = r + dr * step;
+          const nc = c + dc * step;
 
-  return match[1] || match[2] || match[3] || match[4] || null;
+          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) break;
+          if (squares[nr * cols + nc] !== start) break;
+
+          count++;
+        }
+
+        if (count === winLength) return start;
+      }
+    }
+  }
+
+  return null;
 }
