@@ -61,7 +61,7 @@ function Board({ squares, rows, cols, onClickSquare, status, winner }) {
   return (
     <>
       <div className="status">{status}</div>
-      {winner ? <p className="congrats">Congratulations!! You Win!</p> : null}
+      {winner ? <p className="congrats">Congratulations!! { winner } Wins!</p> : null}
 
       <div style={gridStyle}>
         {squares.map((value, i) => (
