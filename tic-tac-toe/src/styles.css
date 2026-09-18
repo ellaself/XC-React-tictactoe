@@ -1,90 +1,268 @@
-* {
-  box-sizing: border-box;
-}
+/* ==================================================
+   Dark Purple / Lavender Tic-Tac-Toe Theme
+   ================================================== */
 
-body {
-  font-family: sans-serif;
-  margin: 20px;
-  padding: 0;
-}
+   * {
+    box-sizing: border-box;
+  }
+  
+  
+  /* ==================================================
+     Page
+     ================================================== */
+  
+  body {
+    font-family: sans-serif;
+    margin: 20px;
+    padding: 0;
+    font-size: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  
+    margin: 0;
+    padding-left: 100px;
+    padding-top: 50px;
+    /* Dark wine / grape background */
+    background-color: #3a0c30;
+  
+    /* Pale lavender text */
+    color: #eadcf2;
+  }
+  
+  
+  /* ==================================================
+     Headings
+     ================================================== */
+  .title{
+    margin-top: 0;
+    font-size: 35px;
+    color: #eadcf2;
+  }
 
-h1 {
-  margin-top: 0;
-  font-size: 22px;
-}
 
-h2 {
-  margin-top: 0;
-  font-size: 20px;
-}
-
-h3 {
-  margin-top: 0;
-  font-size: 18px;
-}
-
-h4 {
-  margin-top: 0;
-  font-size: 16px;
-}
-
-h5 {
-  margin-top: 0;
-  font-size: 14px;
-}
-
-h6 {
-  margin-top: 0;
-  font-size: 12px;
-}
-
-code {
-  font-size: 1.2em;
-}
-
-ul {
-  padding-inline-start: 20px;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: sans-serif;
-  margin: 20px;
-  padding: 0;
-}
-
-.square {
-  background: #fff;
-  border: 1px solid #999;
-  float: left;
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 34px;
-  height: 34px;
-  margin-right: -1px;
-  margin-top: -1px;
-  padding: 0;
-  text-align: center;
-  width: 34px;
-}
-
-.board-row:after {
-  clear: both;
-  content: '';
-  display: table;
-}
-
-.status {
-  margin-bottom: 10px;
-}
-.game {
-  display: flex;
-  flex-direction: row;
-}
-
-.game-info {
-  margin-left: 20px;
-}
+  
+  h2 {
+    margin-top: 0;
+    font-size: 20px;
+    color: #eadcf2;
+  }
+  
+  h3 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #eadcf2;
+  }
+  
+  h4 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #eadcf2;
+  }
+  
+  h5 {
+    margin-top: 0;
+    font-size: 14px;
+    color: #eadcf2;
+  }
+  
+  h6 {
+    margin-top: 0;
+    font-size: 12px;
+    color: #eadcf2;
+  }
+  
+  code {
+    font-size: 1.5em;
+    color: #eadcf2;
+  }
+  
+  ul {
+    padding-inline-start: 20px;
+  }
+  
+  
+  /* ==================================================
+     Game Layout
+     ================================================== */
+  
+  .game {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    color: #eadcf2;
+  }
+  
+  
+  /* ==================================================
+     Tic-Tac-Toe Squares
+     ================================================== */
+  
+  .square {
+    /* Same dark purple as background */
+    background-color: #5b234f;
+  
+    /* Lavender grid lines */
+    border: 2px solid #eadcf2;
+  
+    /* Lavender X and O */
+    color: #eadcf2;
+  
+    font-size: 24px;
+    font-weight: bold;
+  
+    line-height: 44px;
+    height: 44px;
+    width: 44px;
+  
+    padding: 0;
+    text-align: center;
+  
+    border-radius: 0;
+  
+    cursor: pointer;
+  }
+  
+  
+  /* ==================================================
+     Square Hover
+     ================================================== */
+  
+  .square:hover {
+    background-color: #eadcf2;
+    color: #5b234f;
+  }
+  
+  
+  /* ==================================================
+     Game Status
+     ================================================== */
+  
+  .status {
+    margin-bottom: 10px;
+  
+    color: #eadcf2;
+  
+    font-weight: bold;
+  }
+  
+  
+  /* ==================================================
+     Winner Message
+     ================================================== */
+  
+  .congrats {
+    color: #eadcf2;
+  
+    font-weight: bold;
+  
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+  
+  
+  /* ==================================================
+     Row / Column Inputs
+     ================================================== */
+  
+  input[type="number"] {
+    width: 45px;
+  
+    /* Dark purple inside */
+    background-color: #5b234f;
+  
+    /* Lavender number */
+    color: #eadcf2;
+  
+    /* Lavender outline */
+    border: 2px solid #eadcf2;
+  
+    border-radius: 5px;
+  
+    padding: 5px;
+  
+    font-size: 1rem;
+  }
+  
+  
+  /* ==================================================
+     Buttons
+     ================================================== */
+  
+  button {
+    /* Dark purple button */
+    background-color:  #eadcf2;
+  
+    /* Lavender text */
+    color: #4e1241;
+  
+    /* Lavender outline */
+    border: 2px solid #eadcf2;
+  
+    border-radius: 6px;
+  
+    padding: 6px 12px;
+  
+    font-size: 1rem;
+    font-weight: bold;
+  
+    cursor: pointer;
+  }
+  
+  
+  /* ==================================================
+     Button Hover
+     ================================================== */
+  
+  button:hover {
+    /* Flip the colors */
+    background-color: #eadcf2;
+    color: #5b234f;
+  }
+  
+  
+  /* ==================================================
+     Keep Board Squares Square
+     ================================================== */
+  
+  .square {
+    padding: 0;
+    border-radius: 0;
+  }
+  
+  
+  /* ==================================================
+     Move History
+     ================================================== */
+  
+     .game-info ol {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    
+      margin: 0;
+      padding-left: 50px;
+    }
+  
+  
+  /* ==================================================
+     Board Row
+     ================================================== */
+  
+  .board-row:after {
+    clear: both;
+    content: "";
+    display: table;
+  }
+  
+  
+  /* ==================================================
+     Labels / Text
+     ================================================== */
+  
+  label,
+  span,
+  strong,
+  p {
+    color: #eadcf2;
+  }
